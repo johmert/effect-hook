@@ -4,14 +4,9 @@ function ProfileEdit() {
     const [user, setUser] = useState({});
   
     useEffect(() => {
-      async function loadUsers() {
-        const response = await fetch(
-          "https://jsonplaceholder.typicode.com/users/1"
-        );
-        const userFromAPI = await response.json();
-        setUser(userFromAPI);
-      }
-      loadUsers();
+      fetch("https://jsonplaceholder.typicode.com/users/1")
+      .then(response => response.json())
+      .then(setUser);
     }, []); // Passing [] so that it only runs the effect once
   
     if (user.id) {
