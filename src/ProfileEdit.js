@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-function ProfileEdit() {
+function ProfileEdit({userID}) {
     const [user, setUser] = useState({});
 
     const changeHandler = event => {
@@ -19,6 +19,16 @@ function ProfileEdit() {
         const savedData = await response.json();
         console.log("Saved user!", savedData);
     };
+
+    useEffect(() => {
+        async function loadUser() {
+          const response = await fetch(`https://jsonplaceholder.typicode.com/users/${userID}`);
+          const userFromAPI = await response.json();
+          setUser(userFromAPI);
+        }
+    
+        loadUser();
+      }, [userID]);
 
     useEffect(() => {
       fetch("https://jsonplaceholder.typicode.com/users/1")
