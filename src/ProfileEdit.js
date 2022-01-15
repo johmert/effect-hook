@@ -1,81 +1,85 @@
 import React, { useEffect, useState } from "react";
 
-function ProfileEdit({userID}) {
-    const [user, setUser] = useState({});
+function ProfileEdit({ userID }) {
+  const [user, setUser] = useState({});
 
-    const changeHandler = event => {
-        setUser({ ...user, [event.target.name]: event.target.value })
-      }
-
-    const submitHandler = async (event) => {
-        event.preventDefault();
+  useEffect(() => {
+    setUser({});
+    const abortController = new AbortController();
+  
+    async function loadUser() {
+      try {
         const response = await fetch(
-            `https://jsonplaceholder.typicode.com/users/${user.id}`,
-            {
-                method: "PUT",
-                body: JSON.stringify(user)
-            }
+          `https://jsonplaceholder.typicode.com/users/${userID}`,
+          { signal: abortController.signal }
         );
-        const savedData = await response.json();
-        console.log("Saved user!", savedData);
-    };
-
-    useEffect(() => {
-        async function loadUser() {
-          const response = await fetch(`https://jsonplaceholder.typicode.com/users/${userID}`);
-          const userFromAPI = await response.json();
-          setUser(userFromAPI);
-        }
-    
-        loadUser();
-      }, [userID]);
-
-    useEffect(() => {
-      fetch("https://jsonplaceholder.typicode.com/users/1")
-      .then(response => response.json())
-      .then(setUser);
-    }, []); // Passing [] so that it only runs the effect once
-
-    useEffect(() => {
-        if (user.username) {
-          document.title = `${user.username} : Edit Profile`;
+        const userFromAPI = await response.json();
+        setUser(userFromAPI);
+      } catch (error) {
+        if (error.name === "AbortError") {
+          // Ignore `AbortError`
+          console.log("Aborted", userID);
         } else {
-          document.title = "Edit Profile";
+          throw error;
         }
-      }, [user]
-    );
+      }
+    }
+  
+    loadUser();
+  
+    return () => abortController.abort();
+  }, [userID]); // Rerun this effect when the user changes
 
-    if (user.id) {
-      // `user.id` is truthy after the API call returns
-      return (
-        <form name="profileEdit" onSubmit={submitHandler}>
+  const changeHandler = (event) => {
+    setUser({ ...user, [event.target.name]: event.target.value });
+  };
+
+  const submitHandler = async (event) => {
+    event.preventDefault();
+    const response = await fetch(
+      `https://jsonplaceholder.typicode.com/users/${userID}`,
+      {
+        method: "PUT",
+        body: JSON.stringify(user),
+      }
+    );
+    const savedData = await response.json();
+    console.log("Saved user!", savedData);
+  };
+
+  if (user.id) {
+    return (
+      <form name="profileEdit" onSubmit={submitHandler}>
+        <fieldset>
+          <legend>API User ID: {user.id}</legend>
           <div>
             <label htmlFor="username">User Name:</label>
             <input
-                id="username"
-                name="wrongusername"
-                type="text"
-                required={true}
-                value={user.username}
-                onChange={changeHandler}
+              id="username"
+              name="username"
+              type="text"
+              required={true}
+              value={user.username}
+              onChange={changeHandler}
             />
           </div>
           <div>
             <label htmlFor="email">Email:</label>
             <input
-                id="email"
-                name="email"
-                type="email"
-                required={true}
-                value={user.email}
-                onChange={changeHandler}
+              id="email"
+              name="email"
+              type="email"
+              required={true}
+              value={user.email}
+              onChange={changeHandler}
             />
           </div>
           <button type="submit">Save</button>
-        </form>
-      );
-    }
-    return "Loading...";
+        </fieldset>
+      </form>
+    );
   }
+  return "Loading...";
+}
 
-  export default ProfileEdit;
+export default ProfileEdit;
